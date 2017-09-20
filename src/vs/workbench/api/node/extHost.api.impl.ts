@@ -489,14 +489,14 @@ export function createApiFactory(
 			get inputBox() {
 				return extHostSCM.getLastInputBox(extension);
 			},
-			createSourceControl(id: string, label: string) {
+			createSourceControl(id: string, label: string, rootUri?: vscode.Uri) {
 				mainThreadTelemetry.$publicLog('registerSCMProvider', {
 					extensionId: extension.id,
 					providerId: id,
 					providerLabel: label
 				});
 
-				return extHostSCM.createSourceControl(extension, id, label);
+				return extHostSCM.createSourceControl(extension, id, label, rootUri);
 			}
 		};
 
@@ -554,8 +554,8 @@ export function createApiFactory(
 			CancellationTokenSource: CancellationTokenSource,
 			CodeLens: extHostTypes.CodeLens,
 			Color: extHostTypes.Color,
-			ColorFormat: extHostTypes.ColorFormat,
-			ColorRange: extHostTypes.ColorRange,
+			ColorPresentation: extHostTypes.ColorPresentation,
+			ColorInformation: extHostTypes.ColorInformation,
 			EndOfLine: extHostTypes.EndOfLine,
 			CompletionItem: extHostTypes.CompletionItem,
 			CompletionItemKind: extHostTypes.CompletionItemKind,

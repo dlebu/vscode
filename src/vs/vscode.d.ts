@@ -5507,6 +5507,11 @@ declare module 'vscode' {
 		readonly label: string;
 
 		/**
+		 * The (optional) Uri of the root of this source control.
+		 */
+		readonly rootUri: Uri | undefined;
+
+		/**
 		 * The [input box](#SourceControlInputBox) for this source control.
 		 */
 		readonly inputBox: SourceControlInputBox;
@@ -5574,9 +5579,10 @@ declare module 'vscode' {
 		 *
 		 * @param id An `id` for the source control. Something short, eg: `git`.
 		 * @param label A human-readable string for the source control. Eg: `Git`.
+		 * @param rootUri An optional Uri of the root of the source control. Eg: `Uri.parse(workspaceRoot)`.
 		 * @return An instance of [source control](#SourceControl).
 		 */
-		export function createSourceControl(id: string, label: string): SourceControl;
+		export function createSourceControl(id: string, label: string, rootUri?: Uri): SourceControl;
 	}
 
 	/**
@@ -5689,7 +5695,7 @@ declare module 'vscode' {
 		 * or by directly passing a [DebugConfiguration](#DebugConfiguration).
 		 * The named configurations are looked up in '.vscode/launch.json' found in the given folder.
 		 * Before debugging starts, all unsaved files are saved and the launch configurations are brought up-to-date.
-		 * Folder specific variables used in the configuration (e.g. '${workspaceRoot}') are resolved against the given folder.
+		 * Folder specific variables used in the configuration (e.g. '${workspaceFolder}') are resolved against the given folder.
 		 * @param folder The [workspace folder](#WorkspaceFolder) for looking up named configurations and resolving variables or `undefined` for a non-folder setup.
 		 * @param nameOrConfiguration Either the name of a debug or compound configuration or a [DebugConfiguration](#DebugConfiguration) object.
 		 * @return A thenable that resolves when debugging could be successfully started.

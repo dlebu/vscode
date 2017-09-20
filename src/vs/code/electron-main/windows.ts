@@ -19,7 +19,7 @@ import { IPathWithLineAndColumn, parseLineAndColumnAware } from 'vs/code/node/pa
 import { ILifecycleService, UnloadReason, IWindowUnloadEvent } from 'vs/platform/lifecycle/electron-main/lifecycleMain';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ILogService } from 'vs/platform/log/common/log';
-import { IWindowSettings, OpenContext, IPath, IWindowConfiguration, INativeOpenDialogOptions, ReadyState, IPathsToWaitFor } from 'vs/platform/windows/common/windows';
+import { IWindowSettings, OpenContext, IPath, IWindowConfiguration, INativeOpenDialogOptions, ReadyState, IPathsToWaitFor, IEnterWorkspaceResult } from 'vs/platform/windows/common/windows';
 import { getLastActiveWindow, findBestWindowOrFolderForFile, findWindowOnWorkspace, findWindowOnExtensionDevelopmentPath, findWindowOnWorkspaceOrFolderPath } from 'vs/code/node/windowsFinder';
 import CommonEvent, { Emitter } from 'vs/base/common/event';
 import product from 'vs/platform/node/product';
@@ -124,9 +124,6 @@ export class WindowsManager implements IWindowsMainService {
 
 	private _onWindowLoad = new Emitter<number>();
 	onWindowLoad: CommonEvent<number> = this._onWindowLoad.event;
-
-	private _onWindowOpenWorkspace = new Emitter<number>();
-	onWindowWorkspaceOpen: CommonEvent<number> = this._onWindowOpenWorkspace.event;
 
 	private _onActiveWindowChanged = new Emitter<CodeWindow>();
 	onActiveWindowChanged: CommonEvent<CodeWindow> = this._onActiveWindowChanged.event;
@@ -1297,24 +1294,23 @@ export class WindowsManager implements IWindowsMainService {
 		});
 	}
 
-	public saveAndOpenWorkspace(win: CodeWindow, path: string): TPromise<IWorkspaceIdentifier> {
-		return this.workspacesManager.saveAndOpenWorkspace(win, path).then(workspace => {
-
-			// Event
-			this._onWindowOpenWorkspace.fire(win.id);
-
-			return workspace;
-		});
+	public saveAndEnterWorkspace(win: CodeWindow, path: string): TPromise<IEnterWorkspaceResult> {
+		return this.workspacesManager.saveAndEnterWorkspace(win, path).then(result => this.doEnterWorkspace(win, result));
 	}
 
-	public createAndOpenWorkspace(win: CodeWindow, folders?: string[], path?: string): TPromise<IWorkspaceIdentifier> {
-		return this.workspacesManager.createAndOpenWorkspace(win, folders, path).then(workspace => {
+	public createAndEnterWorkspace(win: CodeWindow, folders?: string[], path?: string): TPromise<IEnterWorkspaceResult> {
+		return this.workspacesManager.createAndEnterWorkspace(win, folders, path).then(result => this.doEnterWorkspace(win, result));
+	}
 
-			// Event
-			this._onWindowOpenWorkspace.fire(win.id);
+	private doEnterWorkspace(win: CodeWindow, result: IEnterWorkspaceResult): IEnterWorkspaceResult {
 
-			return workspace;
-		});
+		// Mark as recently opened
+		this.historyService.addRecentlyOpened([result.workspace], []);
+
+		// Trigger Eevent to indicate load of workspace into window
+		this._onWindowReady.fire(win);
+
+		return result;
 	}
 
 	public openWorkspace(win?: CodeWindow): void {
@@ -1652,7 +1648,7 @@ class WorkspacesManager {
 	) {
 	}
 
-	public saveAndOpenWorkspace(window: CodeWindow, path: string): TPromise<IWorkspaceIdentifier> {
+	public saveAndEnterWorkspace(window: CodeWindow, path: string): TPromise<IEnterWorkspaceResult> {
 		if (!window || !window.win || window.readyState !== ReadyState.READY || !window.openedWorkspace || !path || !this.isValidTargetWorkspacePath(window, path)) {
 			return TPromise.as(null); // return early if the window is not ready or disposed or does not have a workspace
 		}
@@ -1660,7 +1656,7 @@ class WorkspacesManager {
 		return this.doSaveAndOpenWorkspace(window, window.openedWorkspace, path);
 	}
 
-	public createAndOpenWorkspace(window: CodeWindow, folders?: string[], path?: string): TPromise<IWorkspaceIdentifier> {
+	public createAndEnterWorkspace(window: CodeWindow, folders?: string[], path?: string): TPromise<IEnterWorkspaceResult> {
 		if (!window || !window.win || window.readyState !== ReadyState.READY || !this.isValidTargetWorkspacePath(window, path)) {
 			return TPromise.as(null); // return early if the window is not ready or disposed
 		}
@@ -1703,7 +1699,7 @@ class WorkspacesManager {
 		return true; // OK
 	}
 
-	private doSaveAndOpenWorkspace(window: CodeWindow, workspace: IWorkspaceIdentifier, path?: string): TPromise<IWorkspaceIdentifier> {
+	private doSaveAndOpenWorkspace(window: CodeWindow, workspace: IWorkspaceIdentifier, path?: string): TPromise<IEnterWorkspaceResult> {
 		let savePromise: TPromise<IWorkspaceIdentifier>;
 		if (path) {
 			savePromise = this.workspacesService.saveWorkspace(workspace, path);
@@ -1725,7 +1721,7 @@ class WorkspacesManager {
 			window.config.workspace = workspace;
 			window.config.backupPath = backupPath;
 
-			return workspace;
+			return { workspace, backupPath };
 		});
 	}
 

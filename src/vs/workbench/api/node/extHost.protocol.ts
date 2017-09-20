@@ -365,7 +365,7 @@ export type SCMRawResourceSplices = [
 ];
 
 export interface MainThreadSCMShape extends IDisposable {
-	$registerSourceControl(handle: number, id: string, label: string): void;
+	$registerSourceControl(handle: number, id: string, label: string, rootUri: string | undefined): void;
 	$updateSourceControl(handle: number, features: SCMProviderFeatures): void;
 	$unregisterSourceControl(handle: number): void;
 
@@ -384,8 +384,8 @@ export type DebugSessionUUID = string;
 export interface MainThreadDebugServiceShape extends IDisposable {
 	$registerDebugConfigurationProvider(type: string, hasProvideMethod: boolean, hasResolveMethod: boolean, handle: number): TPromise<any>;
 	$unregisterDebugConfigurationProvider(handle: number): TPromise<any>;
-	$startDebugging(folderUri: URI | undefined, nameOrConfig: string | vscode.DebugConfiguration): TPromise<boolean>;
-	$startDebugSession(folderUri: URI | undefined, config: vscode.DebugConfiguration): TPromise<DebugSessionUUID>;
+	$startDebugging(folder: URI | undefined, nameOrConfig: string | vscode.DebugConfiguration): TPromise<boolean>;
+	$startDebugSession(folder: URI | undefined, config: vscode.DebugConfiguration): TPromise<DebugSessionUUID>;
 	$customDebugAdapterRequest(id: DebugSessionUUID, command: string, args: any): TPromise<any>;
 }
 
@@ -550,7 +550,7 @@ export interface ExtHostLanguageFeaturesShape {
 	$provideDocumentLinks(handle: number, resource: URI): TPromise<modes.ILink[]>;
 	$resolveDocumentLink(handle: number, link: modes.ILink): TPromise<modes.ILink>;
 	$provideDocumentColors(handle: number, resource: URI): TPromise<IRawColorInfo[]>;
-	$resolveDocumentColor(handle: number, color: modes.IColor, colorFormat: modes.ColorFormat): TPromise<string>;
+	$provideColorPresentations(handle: number, colorInfo: IRawColorInfo): TPromise<modes.IColorPresentation[]>;
 }
 
 export interface ExtHostQuickOpenShape {
