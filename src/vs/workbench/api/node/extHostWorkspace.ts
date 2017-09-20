@@ -11,7 +11,7 @@ import { delta } from 'vs/base/common/arrays';
 import { relative } from 'path';
 import { Workspace } from 'vs/platform/workspace/common/workspace';
 import { TPromise } from 'vs/base/common/winjs.base';
-import { IWorkspaceData, ExtHostWorkspaceShape, MainContext, MainThreadWorkspaceShape, IMainContext } from './extHost.protocol';
+import { IWorkspaceData, ExtHostWorkspaceShape, MainContext, MainThreadWorkspaceShape, IMainContext, IEnvironment } from './extHost.protocol';
 import * as vscode from 'vscode';
 import { compare } from 'vs/base/common/strings';
 import { asWinJsPromise } from 'vs/base/common/async';
@@ -19,6 +19,7 @@ import { Disposable } from 'vs/workbench/api/node/extHostTypes';
 import { TrieMap } from 'vs/base/common/map';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { Progress } from 'vs/platform/progress/common/progress';
+import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 
 class Workspace2 extends Workspace {
 
@@ -61,22 +62,33 @@ class Workspace2 extends Workspace {
 	}
 }
 
-export class ExtHostWorkspace implements ExtHostWorkspaceShape {
+export class ExtHostWorkspace implements ExtHostWorkspaceShape, IDisposable {
 
 	private static _requestIdPool = 0;
+	private disposables: IDisposable[] = [];
 
 	private readonly _onDidChangeWorkspace = new Emitter<vscode.WorkspaceFoldersChangeEvent>();
 	private readonly _proxy: MainThreadWorkspaceShape;
 	private _workspace: Workspace2;
+	private _environment: IEnvironment;
 
 	readonly onDidChangeWorkspace: Event<vscode.WorkspaceFoldersChangeEvent> = this._onDidChangeWorkspace.event;
 
-	constructor(mainContext: IMainContext, data: IWorkspaceData) {
+	constructor(mainContext: IMainContext, data: IWorkspaceData, environment: IEnvironment = undefined) {
 		this._proxy = mainContext.get(MainContext.MainThreadWorkspace);
 		this._workspace = Workspace2.fromData(data);
+		this._environment = environment;
+	}
+
+	public dispose(): void {
+		dispose(this.disposables);
 	}
 
 	// --- workspace ---
+
+	getLaunchURL(): string {
+		return this._environment.args['open-url'] as string;
+	}
 
 	get workspace(): Workspace {
 		return this._workspace;

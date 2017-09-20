@@ -345,6 +345,7 @@ export class ExtensionHostProcessWorker {
 			const r: IInitData = {
 				parentPid: process.pid,
 				environment: {
+					args: this._environmentService.args,
 					isExtensionDevelopmentDebug: this._isExtensionDevDebug,
 					appRoot: this._environmentService.appRoot,
 					appSettingsHome: this._environmentService.appSettingsHome,

@@ -40,6 +40,7 @@ declare module 'vscode' {
 
 	export namespace workspace {
 		export function registerFileSystemProvider(authority: string, provider: FileSystemProvider): Disposable;
+		export function getLaunchURL(): string;
 	}
 
 	export namespace window {

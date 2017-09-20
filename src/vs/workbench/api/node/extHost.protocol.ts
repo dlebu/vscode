@@ -48,6 +48,7 @@ import { ThemeColor } from 'vs/platform/theme/common/themeService';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { SerializedError } from 'vs/base/common/errors';
 import { WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { ParsedArgs } from 'vs/platform/environment/common/environment';
 
 export interface IEnvironment {
 	isExtensionDevelopmentDebug: boolean;
@@ -59,6 +60,7 @@ export interface IEnvironment {
 	userExtensionsHome: string;
 	extensionDevelopmentPath: string;
 	extensionTestsPath: string;
+	args: ParsedArgs;
 }
 
 export interface IWorkspaceData {
